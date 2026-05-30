@@ -4,7 +4,7 @@ import discord
 from discord.ext import commands
 from PIL import Image
 
-token = ""
+token = "PASTE_YOUR_DISCORD_TOKEN_HERE"
 
 # Set up intents (required to read message content in modern discord.py)
 intents = discord.Intents.default()
@@ -53,11 +53,19 @@ async def on_ready():
             if not os.path.exists(path): continue
             
             try:
-                # 애니메이션 슬롯을 사용하기 위해 PNG를 단일 프레임 GIF로 메모리 변환
+                # 디스코드가 애니메이션 슬롯으로 인식하려면 다중 프레임 GIF여야 하므로 같은 프레임 2장으로 저장
                 with Image.open(path) as img:
                     b = io.BytesIO()
-                    img.save(b, format="GIF")
-                    
+                    img.save(
+                        b,
+                        format="GIF",
+                        save_all=True,
+                        append_images=[img.copy()],
+                        duration=100,
+                        loop=0,
+                        disposal=2,
+                    )
+
                 await guild.create_custom_emoji(name=f"arrow_{idx}", image=b.getvalue())
             except Exception as e:
                 print(f"Failed to upload gif arrow_{idx}: {e}")
@@ -70,4 +78,4 @@ if __name__ == '__main__':
     if token:
         bot.run(token)
     else:
-        print("Error: Please set the DISCORD_TOKEN in your .env file.")
+        print("Error: Please set the token at the top of bot.py.")
