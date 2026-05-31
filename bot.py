@@ -4,7 +4,7 @@ import discord
 from discord.ext import commands
 from PIL import Image
 
-token = "PASTE_YOUR_DISCORD_TOKEN_HERE"
+token = os.environ.get("DISCORD_TOKEN", "")
 
 # Set up intents (required to read message content in modern discord.py)
 intents = discord.Intents.default()
@@ -53,14 +53,23 @@ async def on_ready():
             if not os.path.exists(path): continue
             
             try:
-                # 디스코드가 애니메이션 슬롯으로 인식하려면 다중 프레임 GIF여야 하므로 같은 프레임 2장으로 저장
+                # 디스코드가 애니메이션 슬롯으로 인식하려면 '진짜' 다중 프레임 GIF여야 한다.
+                # 프레임 2장이 완전히 동일하면 PIL이 하나로 합쳐 단일 프레임 GIF가 되고,
+                # 그러면 디스코드가 정적(static) 이모지로 취급해 50칸 한도에 걸린다.
+                # 그래서 두 번째 프레임의 픽셀 1개 alpha를 살짝 바꿔 두 프레임을 강제로 구분한다.
                 with Image.open(path) as img:
+                    f1 = img.convert("RGBA")
+                    f2 = f1.copy()
+                    px = f2.load()
+                    r, g, bl, a = px[0, 0]
+                    px[0, 0] = (r, g, bl, a - 1 if a > 0 else 1)
+
                     b = io.BytesIO()
-                    img.save(
+                    f1.save(
                         b,
                         format="GIF",
                         save_all=True,
-                        append_images=[img.copy()],
+                        append_images=[f2],
                         duration=100,
                         loop=0,
                         disposal=2,

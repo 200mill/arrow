@@ -1,7 +1,8 @@
 import discord
+import os
 from discord.ext import commands
 
-token = "PASTE_YOUR_DISCORD_TOKEN_HERE"
+token = os.environ.get("DISCORD_TOKEN", "")
 
 SERVERS = [1510207817217474661, 1510208070347653172, 1510208881769320518, 1510209273827950652]
 SELECTED_INDEX = 0
